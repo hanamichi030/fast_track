@@ -1,34 +1,23 @@
-"""Poker44 bot detector — coralplus-v7 (CORAL + per-feature quantile stack).
+"""Poker44 bot detector — uid7 (Ares90125/poker7), v5 "sanitization fix".
 
-Model: ExtraTrees(n_jobs=1) + HistGradientBoosting soft-vote ensemble over the
-same 180-feature C2 behavioral feature set (features.py / FEATURE_NAMES), with a
-TWO-STAGE domain adaptation baked into TRAINING (see train_model.py):
+Model: **ExtraTrees + HistGradientBoosting soft-vote ensemble** over the v3
+behavioral feature set with the fragile identity / raw-magnitude aggregates
+REMOVED (candidate C2 — see features.py FEATURE_NAMES). Those columns went
+out-of-distribution on the validator-sanitized live feed and collapsed the raw
+predict_proba spread (v3 live raw-std ~0.003, v4 ~0.012); dropping them plus
+training on hands passed through the validator's prepare_hand_for_miner
+(train==serve) restores a healthy live raw-std. Output = **within-batch rank**,
+which matches the validator's ranking-based reward.
 
-  1. CORAL: benchmark-train features are re-centered and re-colored (mean +
-     covariance) to the UNLABELED live feature distribution.
-  2. QUANTILE STACK: a per-feature monotone quantile map sends each CORAL-aligned
-     source feature's empirical CDF onto the LIVE feature's empirical CDF. This
-     fixes the residual marginal shape (skew / multimodality / the chunk-size-
-     induced marginal shift, benchmark ~34h vs live ~93h) that CORAL's 2nd-order
-     match leaves behind.
+IMPORTANT — inference does NOT sanitize. Live chunks arrive already sanitized by
+the validator (prepare_hand_for_miner runs validator-side, per hand). Only
+TRAINING sanitizes raw benchmark hands (see train_model.py). Sanitizing again
+here would double-transform already-sanitized hands and re-introduce skew, so
+this path featurizes the incoming chunks directly.
 
-Both stages use ONLY unlabeled live feature statistics (no live labels exist).
-Benchmark labels are used solely for the classifier fit. On the 500 held-out
-live chunks this lifts raw predict_proba std 0.133 -> 0.143 and the
-duplication-rank Spearman 0.606 -> 0.635 vs CORAL.
-
-IMPORTANT — inference does NOT sanitize and does NOT re-apply either alignment
-stage. Live chunks arrive already sanitized by the validator
-(prepare_hand_for_miner runs validator-side) AND are already in the live feature
-space the model was aligned to during training, so this path featurizes the
-incoming chunks directly and calls the model as-is. Re-applying the CORAL /
-quantile transforms here would double-shift already-live-space data. The baked
-transforms (mu_src, mu_tgt, W, quantile grids) are shipped in
-quantstack_transform.npz for reference / benchmark-space use only.
-
-Output = within-batch rank in [0,1] (higher = more bot-like), matching the
-validator's ranking-based reward. ExtraTrees n_jobs=1 (deterministic, single
-thread). No thresholds / clips / rank tricks beyond the within-batch rank.
+The trained model is the committed `model.joblib` (v5_sani candidate C2).
+sklearn loads it at inference. `score_batch(chunks)` returns one rank-based
+bot-risk score in [0,1] per chunk.
 """
 from __future__ import annotations
 
@@ -61,11 +50,10 @@ def _rank_normalize(vals):
 
 
 def _raw_scores(model, chunks):
-    # Live chunks are already sanitized AND already in the aligned live feature
-    # space; featurize as-is (no re-sanitize, no re-transform).
+    # Live chunks are already sanitized by the validator; featurize as-is.
     rows = []
     for c in chunks:
-        feats = chunk_features(c)
+        feats = chunk_features(c)          # compute the feature set ONCE per chunk
         rows.append([feats.get(k, 0.0) for k in FEATURE_NAMES])
     return model.predict_proba(np.array(rows, dtype=float))[:, 1]
 
