@@ -1,18 +1,21 @@
 """Reproducible training for poker13-ensemble -> writes model.joblib.
 
 Widened soft-vote bag (ExtraTrees seed17 + ExtraTrees seed24 + RandomForest
-seed17 + HistGradientBoosting seed17), all n_jobs=1, over the 180
-sanitization-invariant FEATURE_NAMES (see features.py). Trained on the FULL
-public Poker44 benchmark v1.14 (886 labeled chunk groups, releases
-2026-05-26 .. 2026-07-07, including the pattern_hardened_v2 bot releases
-2026-07-06/07).
+seed17 + HistGradientBoosting seed17), all n_jobs=1, min_samples_leaf=2 on
+the forests and max_iter=500 on the HGB, over the 180 sanitization-invariant
+FEATURE_NAMES (see features.py). Trained on the FULL public Poker44 benchmark
+v1.14 (886 labeled chunk groups, releases 2026-05-26 .. 2026-07-07, including
+the pattern_hardened_v2 bot releases 2026-07-06/07).
 
-Selection evidence (date-held-out, validator reward = 0.75*AP + 0.25*recall@FPR<=5%):
-trained on releases <= 07-06 and tested on the unseen 07-07 hardened release,
-this recipe scores 0.897 vs 0.893 for the prior-generation artifact with the
-same training coverage; with only pre-hardened training data it beats the
-plain 2-model C2 bag by ~+0.02 reward on hardened bots (the widened bag
-generalizes better under distribution shift).
+Selection evidence (date-held-out, validator reward = 0.75*AP + 0.25*recall@FPR<=5%),
+two folds (train<=07-06 test 07-07; train<=07-05 test 07-06..07):
+  - this config beats the leaf=4 / hgb_iter=300 base on BOTH folds
+    (0.9006/0.8719 vs 0.8972/0.8677) — the only tested knobs that did;
+  - the base itself scores 0.897 vs 0.893 for the prior-generation artifact
+    at identical training coverage on the unseen 07-07 hardened release;
+  - hardened-only or hardened-upweighted training mixes LOSE to training on
+    all releases equally; dropping the sig_* duplication features costs
+    ~-0.015 reward even on hardened bots (they still carry real signal).
 
 DEPLOYABLE RULE: every learner is n_jobs=1 (n_jobs=-1 deadlocks the
 validator's batched predict path).
@@ -78,14 +81,14 @@ def load(raw):
 
 def build_ensemble(seed=SEED):
     # DEPLOYABLE: every learner n_jobs=1 (n_jobs=-1 deadlocks batched predict).
-    et = ExtraTreesClassifier(n_estimators=300, min_samples_leaf=4,
+    et = ExtraTreesClassifier(n_estimators=300, min_samples_leaf=2,
                               random_state=seed, n_jobs=1)
-    et2 = ExtraTreesClassifier(n_estimators=300, min_samples_leaf=4,
+    et2 = ExtraTreesClassifier(n_estimators=300, min_samples_leaf=2,
                                random_state=seed + 7, n_jobs=1)
-    rf = RandomForestClassifier(n_estimators=300, min_samples_leaf=4,
+    rf = RandomForestClassifier(n_estimators=300, min_samples_leaf=2,
                                 random_state=seed, n_jobs=1)
     hgb = HistGradientBoostingClassifier(max_depth=3, learning_rate=0.03,
-                                         max_iter=300, l2_regularization=1.0,
+                                         max_iter=500, l2_regularization=1.0,
                                          random_state=seed)
     return VotingClassifier(
         estimators=[("et", et), ("et2", et2), ("rf", rf), ("hgb", hgb)],
