@@ -49,12 +49,12 @@ class Miner(BaseMinerNeuron):
             repo_root=repo_root,
             implementation_files=implementation_files,
             defaults={
-                "model_name": "poker174-ensemble",
-                "model_version": "2",
+                "model_name": "poker13-ensemble",
+                "model_version": "1",
                 "framework": "scikit-learn-ensemble",
                 "license": "MIT",
                 "repo_url": "",
-                "notes": "Gradient-boosted-trees bot detector over behavioral features (poker44_model/).",
+                "notes": "Widened soft-vote tree ensemble bot detector over sanitization-invariant behavioral features (poker44_model/).",
                 "open_source": True,
                 "inference_mode": "remote",
                 "training_data_statement": (

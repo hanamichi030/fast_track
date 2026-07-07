@@ -1,6 +1,6 @@
-"""Poker44 bot detector — uid174 (Ares90125/Poker174), poker174-ensemble.
+"""Poker44 bot detector — uid13, poker13-ensemble.
 
-Model: **widened soft-vote bag — ExtraTrees (2 seeds) + RandomForest +
+Model: **widened soft-vote bag — ExtraTrees (seeds 17/24) + RandomForest +
 HistGradientBoosting** over the v3 behavioral feature set with the fragile
 identity / raw-magnitude aggregates REMOVED (the C2 feature set — see
 features.py FEATURE_NAMES). Those columns went out-of-distribution on the
@@ -18,7 +18,9 @@ TRAINING sanitizes raw benchmark hands (see train_model.py). Sanitizing again
 here would double-transform already-sanitized hands and re-introduce skew, so
 this path featurizes the incoming chunks directly.
 
-The trained model is the committed `model.joblib` (C2 features, widened bag).
+The trained model is the committed `model.joblib` (C2 features, widened bag,
+seed base 17, benchmark v1.14 incl. the pattern_hardened_v2 releases; see
+train_model.py to reproduce).
 sklearn loads it at inference. `score_batch(chunks)` returns one rank-based
 bot-risk score in [0,1] per chunk.
 """
