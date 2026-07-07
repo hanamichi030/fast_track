@@ -1,13 +1,16 @@
-"""Poker44 bot detector — uid7 (Ares90125/poker7), v5 "sanitization fix".
+"""Poker44 bot detector — uid174 (Ares90125/Poker174), poker174-ensemble.
 
-Model: **ExtraTrees + HistGradientBoosting soft-vote ensemble** over the v3
-behavioral feature set with the fragile identity / raw-magnitude aggregates
-REMOVED (candidate C2 — see features.py FEATURE_NAMES). Those columns went
-out-of-distribution on the validator-sanitized live feed and collapsed the raw
-predict_proba spread (v3 live raw-std ~0.003, v4 ~0.012); dropping them plus
-training on hands passed through the validator's prepare_hand_for_miner
-(train==serve) restores a healthy live raw-std. Output = **within-batch rank**,
-which matches the validator's ranking-based reward.
+Model: **widened soft-vote bag — ExtraTrees (2 seeds) + RandomForest +
+HistGradientBoosting** over the v3 behavioral feature set with the fragile
+identity / raw-magnitude aggregates REMOVED (the C2 feature set — see
+features.py FEATURE_NAMES). Those columns went out-of-distribution on the
+validator-sanitized live feed and collapsed the raw predict_proba spread
+(v3 live raw-std ~0.003, v4 ~0.012); dropping them plus training on hands
+passed through the validator's prepare_hand_for_miner (train==serve) restores
+a healthy live raw-std. The extra RandomForest and second-seed ExtraTrees are
+pure variance reduction over the C2 vote — no capture-fitted domain
+adaptation. Output = **within-batch rank**, which matches the validator's
+ranking-based reward.
 
 IMPORTANT — inference does NOT sanitize. Live chunks arrive already sanitized by
 the validator (prepare_hand_for_miner runs validator-side, per hand). Only
@@ -15,7 +18,7 @@ TRAINING sanitizes raw benchmark hands (see train_model.py). Sanitizing again
 here would double-transform already-sanitized hands and re-introduce skew, so
 this path featurizes the incoming chunks directly.
 
-The trained model is the committed `model.joblib` (v5_sani candidate C2).
+The trained model is the committed `model.joblib` (C2 features, widened bag).
 sklearn loads it at inference. `score_batch(chunks)` returns one rank-based
 bot-risk score in [0,1] per chunk.
 """
