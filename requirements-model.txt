@@ -21,3 +21,10 @@ numpy>=1.24
 # 9.6.0 is what the subnet code targets; 9.12.2 for Python 3.14.
 bittensor==9.6.0; python_version < "3.14"
 bittensor==9.12.2; python_version >= "3.14"
+# bittensor 9.x leaves its companion packages under-constrained, so pip happily
+# pairs 9.6.0 with 10.x-era companions that break it at import time
+# (bittensor-drand 2.0 removed get_encrypted_commit; async-substrate-interface
+# 2.x is the 10.x line). Pin the 9.x-era set explicitly:
+bittensor-drand>=1.0.0,<2.0.0
+async-substrate-interface>=1.5.6,<2.0.0
+bittensor-wallet>=3.0.8,<5.0
