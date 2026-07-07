@@ -3,8 +3,12 @@
 # never conflicts on the dependency list.
 #
 # Install with:  pip install -r requirements-model.txt
-#
-# Examples (uncomment / add what you need):
-# torch>=2.2
-# xgboost>=2.0
-# lightgbm>=4.0
+
+# model.joblib was trained with scikit-learn 1.8.0 — the serving venv MUST use
+# the same version or joblib may fail to load / silently mis-deserialize it.
+# If pip cannot install 1.8.0 on your Python, retrain locally instead:
+#   python poker44_model/train_model.py --data <benchmark raw dir> \
+#       --payload-view poker44/validator/payload_view.py
+scikit-learn==1.8.0
+joblib>=1.3
+numpy>=1.24
