@@ -1,4 +1,4 @@
-# Poker44 miner — uid73 (`Ares90125/Poker73`)
+# Poker44 miner — uid13 (`hanamichi030/fast_track`)
 
 This repo is my Poker44 miner. My model lives in **`poker44_model/`**.
 The support team's official repo is the `upstream` remote; I never push to it.
@@ -38,10 +38,10 @@ in `[0, 1]` per chunk (higher = more bot-like). Put extra dependencies in
 A plain clone has **no push credential**, so set it before `./sync.sh` (which pushes):
 
 ```bash
-git clone https://github.com/Ares90125/Poker73.git
-cd Poker73
+git clone https://github.com/hanamichi030/fast_track.git
+cd fast_track
 # embed your token so pushes work non-interactively (or use SSH / a credential helper):
-git remote set-url origin https://<YOUR_TOKEN>@github.com/Ares90125/Poker73.git
+git remote set-url origin https://<YOUR_TOKEN>@github.com/hanamichi030/fast_track.git
 cp miner.env.example miner.env       # fill in wallet/hotkey
 ./sync.sh                            # auto-adds the upstream remote on first run
 ```

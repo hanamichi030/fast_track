@@ -4,12 +4,11 @@
 #
 # Install with:  pip install -r requirements-model.txt
 
-# model.joblib was trained with scikit-learn 1.8.0 — the serving venv MUST use
-# the same version or joblib may fail to load / silently mis-deserialize it.
-# If pip cannot install 1.8.0 on your Python, retrain locally instead:
-#   python poker44_model/train_model.py --data <benchmark raw dir> \
-#       --payload-view poker44/validator/payload_view.py
-scikit-learn==1.8.0
+# BagMLP inference (poker44_model/mlp_bag.py, mlp_member.py). The artifact
+# pickles weights as plain numpy and reloads on CPU; any torch>=2.0 works.
+# scikit-learn is imported at module load (train_test_split) but no sklearn
+# objects are pickled, so upstream's scikit-learn>=1.3 is sufficient.
+torch>=2.0
 joblib>=1.3
 numpy>=1.24
 
@@ -21,10 +20,9 @@ numpy>=1.24
 # 9.6.0 is what the subnet code targets; 9.12.2 for Python 3.14.
 bittensor==9.6.0; python_version < "3.14"
 bittensor==9.12.2; python_version >= "3.14"
-# bittensor 9.x leaves its companion packages under-constrained, so pip happily
-# pairs 9.6.0 with 10.x-era companions that break it at import time
-# (bittensor-drand 2.0 removed get_encrypted_commit; async-substrate-interface
-# 2.x is the 10.x line). Pin the 9.x-era set explicitly:
+# bittensor 9.x under-constrains its companions, so pip pairs 9.6.0 with
+# 10.x-era packages that break it at import (bittensor-drand 2.0 removed
+# get_encrypted_commit; async-substrate-interface 2.x is the 10.x line).
 bittensor-drand>=1.0.0,<2.0.0
 async-substrate-interface>=1.5.6,<2.0.0
 bittensor-wallet>=3.0.8,<5.0

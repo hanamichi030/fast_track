@@ -1,8 +1,8 @@
 # Manifest refresh — uid13 slot
 
-Served model: poker13-ensemble v1 (widened soft-vote bag, C2 feature set,
-n_jobs=1), trained on the full public Poker44 benchmark v1.14. See
-poker44_model/ (train_model.py reproduces model.joblib).
+Served model: poker13-mlp v1 (BagMLP: 5 standardized Torch MLPs over the 180
+sanitization-invariant C2 features, rank-anchored logistic output tuned for
+the 0.1.34 validator reward). See poker44_model/.
 
 This UID slot previously carried a different occupant's manifest
 (poker44-ml-heuristic, repo tomkaba/poker44-miner-release) which failed
