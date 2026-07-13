@@ -4,11 +4,12 @@
 #
 # Install with:  pip install -r requirements-model.txt
 
-# BagMLP inference (poker44_model/mlp_bag.py, mlp_member.py). The artifact
-# pickles weights as plain numpy and reloads on CPU; any torch>=2.0 works.
-# scikit-learn is imported at module load (train_test_split) but no sklearn
-# objects are pickled, so upstream's scikit-learn>=1.3 is sufficient.
-torch>=2.0
+# model.joblib = {tuned LGBMClassifier, sklearn IsotonicRegression, decision
+# constants}. The isotonic calibrator is an sklearn pickle TRAINED WITH
+# scikit-learn 1.9.0 — the serving venv must match that version exactly or
+# unpickling is not guaranteed to reproduce it.
+lightgbm>=4.0
+scikit-learn==1.9.0
 joblib>=1.3
 numpy>=1.24
 

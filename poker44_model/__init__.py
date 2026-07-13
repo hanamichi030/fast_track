@@ -1,21 +1,20 @@
-"""Participant-owned model package for the Poker44 miner — poker13-mlp.
+"""Participant-owned model package for the Poker44 miner — poker13-lgbm.
 
-Bot detector = BagMLP: a 5-member bag of standardized Torch MLPs
-(512-256-128, dropout 0.3, early-stopped on validation loss) over the 180
-sanitization-invariant C2 behavioral features (see features.py
-FEATURE_NAMES). Trees collapse to a near-flat predict_proba on the
-validator-sanitized live feed; standardized MLPs extrapolate and preserve a
-discriminative within-batch ordering. Output is a rank-anchored logistic
-tuned for the 0.1.34 validator reward (0.35*AP + 0.30*recall@FPR<=5% +
-0.30*threshold blocks): the top ~10% of each served batch crosses 0.5, so a
-true bot is essentially always flagged (no hard zero) while the hard human
-FPR stays under the 0.10 cap. Training hands pass through the validator's
+Bot detector = tuned LightGBM (1200 trees, lr 0.02, 63 leaves — the measured
+grouped-by-date AP ceiling on the public benchmark) over the 180
+sanitization-invariant C2 behavioral features (features.py FEATURE_NAMES),
+plus an isotonic calibrator fit on grouped-by-date out-of-fold predictions
+and a reward-fit, FPR-capped within-batch decision layer tuned for the
+0.1.34 validator reward: a small top fraction of each served batch crosses
+the hard 0.5 operating point (no hard zero, hard human-FPR well under the
+0.10 cap), while the transform stays monotone so AP / recall@FPR are those
+of the underlying LGBM ranking. Training hands pass through the validator's
 prepare_hand_for_miner (train==serve); inference does NOT re-sanitize. No
 capture-fitted domain adaptation and no query-chunk fitting. See detector.py
-(inference + output transform), mlp_bag.py / mlp_member.py (model classes),
-features.py (extraction), model.joblib (the fitted artifact).
+(inference + decision layer), features.py (extraction), model.joblib (the
+fitted artifact: LGBM + isotonic + decision constants).
 """
 
-from poker44_model.detector import score_batch, score_chunk
+from poker44_model.detector import score_chunk, score_batch  # noqa: F401
 
 __all__ = ["score_batch", "score_chunk"]
