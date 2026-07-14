@@ -80,31 +80,6 @@ def _calibrated(model, raw):
     return model["iso"].predict(np.asarray(raw, dtype=float))
 
 
-def _tiebroken(model, raw, cal):
-    """Restore within-step ranking that isotonic calibration discards.
-
-    Isotonic output is a step function: on an OOD live batch it collapses 100
-    chunks into ~10 distinct calibrated values, and AP / recall@FPR are rank
-    metrics, so ties inside a step throw away the LGBM's discrimination.
-    Add an epsilon of the raw within-batch rank in logit space: orders of
-    magnitude smaller than any isotonic step (0.5-crossing behavior and the
-    calibrated levels are unchanged), monotone in the calibrated value, and
-    the floor/cap in _decision then picks its top-k by true model order
-    instead of arbitrary input order.
-    """
-    raw = np.asarray(raw, dtype=float)
-    n = raw.size
-    if n <= 1:
-        return cal
-    r = np.argsort(np.argsort(raw, kind="mergesort")) / (n - 1)
-    # 1e-3 in logit space: ~2.5e-4 max shift at p=0.5 (far below any isotonic
-    # step, so 0.5-crossing behavior is unchanged) yet, with 9-decimal output
-    # rounding, still resolves all ranks even deep in the near-0 tail where
-    # dp ~= p * dz.
-    z = _logit(cal, float(model["EPS"])) + 1e-3 * r
-    return 1.0 / (1.0 + np.exp(-z))
-
-
 def _decision(model, cal):
     """Reward-fit, FPR-capped per-batch decision layer on calibrated probs.
 
@@ -130,21 +105,7 @@ def _decision(model, cal):
     scores[order[:k]] = np.maximum(scores[order[:k]], 0.5001)
     if cap:  # deterministic crossing count: nothing beyond top-k crosses 0.5
         scores[order[k:]] = np.minimum(scores[order[k:]], 0.4999)
-    # 9 decimals: 6 collapses the tie-break epsilon in the near-0 tail
-    # (dp ~= p * dz < 1e-6) and re-creates the isotonic ties AP can't use.
-    return [round(float(s), 9) for s in scores]
-
-
-def _fallback_scores(n):
-    """Model/featurization failure: no ranking info is available.
-
-    All-0.5 output would put EVERY chunk at/above the 0.5 threshold ->
-    hard_fpr = 1.0 -> threshold_sanity_quality = 0 -> reward = 0 (hard zero).
-    Instead flag an evenly spaced ~10% of chunks just above 0.5 and the rest
-    just below: TP>0 is near-certain on a mixed window while the hard FPR
-    stays ~0.10, preserving the 0.30 threshold block.
-    """
-    return [0.51 if (i % 10 == 0) else 0.49 for i in range(n)]
+    return [round(float(s), 6) for s in scores]
 
 
 def score_batch(chunks):
@@ -154,10 +115,9 @@ def score_batch(chunks):
         return []
     try:
         m = _model()
-        raw = _raw_scores(m, chunks)
-        return _decision(m, _tiebroken(m, raw, _calibrated(m, raw)))
+        return _decision(m, _calibrated(m, _raw_scores(m, chunks)))
     except Exception:
-        return _fallback_scores(len(chunks))
+        return [0.5] * len(chunks)
 
 
 def score_chunk(chunk):

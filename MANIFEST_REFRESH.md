@@ -1,8 +1,9 @@
 # Manifest refresh — uid13 slot
 
-Served model: poker13-lgbm v1 (tuned LightGBM + isotonic calibration with a
+Served model: poker13-lgbm v2 (tuned LightGBM + isotonic calibration with a
 reward-fit, FPR-capped within-batch decision layer over the 180
-sanitization-invariant C2 features). See poker44_model/.
+sanitization-invariant C2 features). v2 = same fitted artifact as v1 with a
+simplified decision-layer implementation. See poker44_model/.
 
 This UID slot previously carried a different occupant's manifest
 (poker44-ml-heuristic, repo tomkaba/poker44-miner-release) which failed

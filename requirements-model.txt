@@ -7,7 +7,8 @@
 # model.joblib = {tuned LGBMClassifier, sklearn IsotonicRegression, decision
 # constants}. The isotonic calibrator is an sklearn pickle TRAINED WITH
 # scikit-learn 1.9.0 — the serving venv must match that version exactly or
-# unpickling is not guaranteed to reproduce it.
+# unpickling is not guaranteed to reproduce it. WITHOUT lightgbm installed,
+# every request routes to the exception fallback and scores zero reward.
 lightgbm>=4.0
 scikit-learn==1.9.0
 joblib>=1.3

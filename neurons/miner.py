@@ -50,7 +50,7 @@ class Miner(BaseMinerNeuron):
             implementation_files=implementation_files,
             defaults={
                 "model_name": "poker13-lgbm",
-                "model_version": "1",
+                "model_version": "2",
                 "framework": "lightgbm-isotonic",
                 "license": "MIT",
                 "repo_url": "",
