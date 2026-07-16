@@ -4,12 +4,21 @@
 #
 # Install with:  pip install -r requirements-model.txt
 
-# model.joblib = {tuned LGBMClassifier, sklearn IsotonicRegression, decision
-# constants}. The isotonic calibrator is an sklearn pickle TRAINED WITH
-# scikit-learn 1.9.0 — the serving venv must match that version exactly or
-# unpickling is not guaranteed to reproduce it. WITHOUT lightgbm installed,
-# every request routes to the exception fallback and scores zero reward.
+# model.joblib = rank-fused ensemble:
+#   stack = StackingClassifier[LGBMClassifier, XGBClassifier, RandomForestClassifier] -> LogisticRegression
+#   mono  = VotingClassifier[3x LGBMClassifier]
+#   mlp   = Pipeline[StandardScaler, PCA, sklearn MLPClassifier]   (NO torch)
+# so the serving venv MUST have lightgbm + xgboost + scikit-learn.
+#
+# CRITICAL PINS:
+#  * xgboost MUST be 2.x — the pickled XGBClassifier buffer fails to load on
+#    xgboost 3.x ("XGBoostError: input stream corrupted"). Verified on 2.1.4.
+#  * scikit-learn 1.9.0 — the artifact (StackingClassifier / trees / MLP / PCA)
+#    was pickled with 1.9.0; match it exactly or unpickling is not guaranteed.
+#  * Missing lightgbm/xgboost => the ensemble fails to load => every request
+#    routes to the [0.5]*n exception fallback and scores zero reward.
 lightgbm>=4.0
+xgboost>=2.0,<3.0
 scikit-learn==1.9.0
 joblib>=1.3
 numpy>=1.24

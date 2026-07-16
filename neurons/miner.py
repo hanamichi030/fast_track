@@ -49,12 +49,12 @@ class Miner(BaseMinerNeuron):
             repo_root=repo_root,
             implementation_files=implementation_files,
             defaults={
-                "model_name": "poker13-lgbm",
-                "model_version": "2",
-                "framework": "lightgbm-isotonic",
+                "model_name": "poker13-varfuse",
+                "model_version": "1",
+                "framework": "sklearn-lgbm-xgb-ensemble",
                 "license": "MIT",
                 "repo_url": "",
-                "notes": "Tuned LightGBM + isotonic calibration with a reward-fit FPR-capped decision layer over 180 sanitization-invariant behavioral features (poker44_model/).",
+                "notes": "Within-batch rank-fused 3-member ensemble (stacked LGBM+XGB+RF, monotone-constrained LGBM bag, StandardScaler->PCA->MLP) over 180 sanitization-invariant behavioral features (poker44_model/); strictly-monotone tie-free decision layer, deterministic top-10% crossing, no isotonic calibration.",
                 "open_source": True,
                 "inference_mode": "remote",
                 "training_data_statement": (
